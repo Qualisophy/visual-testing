@@ -1,0 +1,66 @@
+---
+const { isMinimal = false } = Astro.props;
+---
+<header class={`bg-surface-container-lowest h-[80px] sticky top-0 z-50 border-b border-outline-variant shadow-sm w-full`}>
+    <div class="h-full flex justify-between items-center px-lg w-full max-w-container-max mx-auto">
+        <a href="/productos" class="font-headline-md text-headline-md font-bold text-primary transition-opacity hover:opacity-80">TestCommerce</a>
+        
+        {isMinimal ? (
+            <div class="flex items-center gap-md">
+                <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Ayuda</a>
+                <a class="font-label-md text-label-md text-[#1B2341] font-semibold border-b-2 border-[#1B2341] pb-1" href="/">Ingresar</a>
+            </div>
+        ) : (
+            <div class="flex items-center gap-lg">
+                <nav class="hidden md:flex gap-md font-body-md text-body-md">
+                    <a class="text-primary border-b-2 border-primary pb-1 hover:text-primary transition-colors duration-200" href="/productos">Productos</a>
+                </nav>
+                
+                <div class="flex items-center gap-sm">
+                    <a href="/carrito" class="p-xs text-on-surface-variant hover:text-primary active:opacity-80 transition-all relative cursor-pointer" data-test="shopping-cart-link">
+                        <span class="material-symbols-outlined">shopping_cart</span>
+                        <span id="cart-badge" data-test="shopping-cart-badge" class="absolute top-0 right-0 bg-primary text-on-primary text-[10px] w-4 h-4 flex items-center justify-center rounded-full hidden transition-transform scale-0 duration-200">0</span>
+                    </a>
+
+                    <button id="logout-btn" data-test="logout-button" class="p-xs text-on-surface-variant hover:text-primary active:opacity-80 transition-all cursor-pointer">
+                        <span class="material-symbols-outlined">logout</span>
+                    </button>
+                </div>
+            </div>
+        )}
+    </div>
+</header>
+
+<script>
+    function updateCartBadge() {
+        const badge = document.getElementById('cart-badge');
+        if (!badge) return;
+        
+        // Ahora leemos un array de objetos
+        const cart = JSON.parse(localStorage.getItem('luxe_cart_items') || '[]');
+        // Sumamos la cantidad de todos los productos
+        const totalItems = cart.reduce((sum: number, item: any) => sum + item.quantity, 0);
+
+        if (totalItems > 0) {
+            badge.textContent = totalItems.toString();
+            badge.classList.remove('hidden', 'scale-0');
+            badge.classList.add('scale-100');
+        } else {
+            badge.classList.remove('scale-100');
+            badge.classList.add('scale-0');
+            setTimeout(() => badge.classList.add('hidden'), 200); 
+        }
+    }
+    
+    updateCartBadge();
+    window.addEventListener('cart-updated', updateCartBadge);
+    window.addEventListener('storage', updateCartBadge);
+
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('luxe_cart_items');
+            window.location.href = '/'; 
+        });
+    }
+</script>

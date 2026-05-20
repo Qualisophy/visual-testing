@@ -1,0 +1,98 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Toast from '../components/shared/ui/Toast';
+---
+<Layout title="Iniciar Sesión" isMinimal={true} bodyClasses="bg-background text-on-background font-body-md selection:bg-primary-fixed selection:text-on-primary-fixed overflow-x-hidden min-h-screen flex flex-col luxury-gradient">
+    <main class="grow flex items-center justify-center relative py-xl px-margin-mobile">
+        
+        <Toast client:load />
+
+        <div class="absolute inset-0 z-0 overflow-hidden opacity-40">
+            <img alt="Lifestyle background" class="w-full h-full object-cover grayscale-20" src="https://images.unsplash.com/photo-1600607686527-6fb886090705?q=80&w=2000&auto=format&fit=crop"/>
+        </div>
+        
+        <div class="z-10 w-full max-w-120 bg-white rounded-xl shadow-[0px_2px_4px_rgba(27,35,65,0.04)] border border-[#E2E8F0] overflow-hidden login-bg-overlay">
+            <div class="p-lg">
+                <div class="text-center mb-md">
+                    <h1 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Bienvenido de nuevo</h1>
+                    <p class="font-body-md text-on-surface-variant">Sitio web para hacer pruebas visuales</p>
+                </div>
+                
+                <form class="space-y-md" id="loginForm">
+                    <div class="space-y-xs">
+                        <label class="font-label-md text-label-md text-on-surface" for="email">Nombre de Usuario / Correo</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">person</span>
+                            <input class="w-full pl-10 pr-4 py-3 bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-body-md" id="email" name="email" placeholder="usuario_prueba_1" type="text" data-test="username" required/>
+                        </div>
+                    </div>
+                    <div class="space-y-xs">
+                        <div class="flex justify-between items-center">
+                            <label class="font-label-md text-label-md text-on-surface" for="password">Contraseña</label>
+                            <a class="font-label-sm text-label-sm text-primary hover:underline" href="#">¿Olvidaste tu contraseña?</a>
+                        </div>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">lock</span>
+                            <input class="w-full pl-10 pr-10 py-3 bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-body-md" id="password" name="password" placeholder="••••••••" type="password" data-test="password" required/>
+                        </div>
+                    </div>
+                    <button data-test="login-button" class="w-full h-14 bg-[#6296CE] hover:bg-[#5284B9] active:bg-[#4874A4] text-white font-label-md text-lg rounded-lg shadow-sm transition-all duration-200 transform hover:-translate-y-0.5" type="submit">
+                        Iniciar Sesión
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-surface-container-low border-t border-outline-variant py-4 px-lg flex flex-col sm:flex-row justify-between text-sm gap-md">
+                <div>
+                    <h3 class="font-bold text-on-surface mb-xs">Usuarios de prueba:</h3>
+                    <ul class="font-mono text-on-surface-variant text-xs space-y-xs">
+                        <li>usuario_prueba_1</li>
+                        <li>usuario_prueba_2</li>
+                        <li>visual_user</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-on-surface mb-xs">Contraseña común:</h3>
+                    <p class="font-mono text-on-surface-variant text-xs">secret_luxe</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>
+
+<script>
+    // Lista de usuarios válidos y contraseña común para la automatización
+    const VALID_USERS = ['usuario_prueba_1', 'usuario_prueba_2', 'visual_user'];
+    const VALID_PASSWORD = 'secret_luxe';
+
+    const loginForm = document.getElementById('loginForm') as HTMLFormElement;
+
+    // Función para disparar el evento que escuchará el componente React
+    function showToastNotification(message: string) {
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { message } }));
+    }
+
+    loginForm?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const usernameInput = document.querySelector('[data-test="username"]') as HTMLInputElement;
+        const passwordInput = document.querySelector('[data-test="password"]') as HTMLInputElement;
+
+        const userVal = usernameInput.value.trim();
+        const passVal = passwordInput.value;
+
+        // Validación de credenciales
+        if (!VALID_USERS.includes(userVal)) {
+            showToastNotification('El usuario introducido no existe en el sistema de pruebas.');
+            return;
+        }
+
+        if (passVal !== VALID_PASSWORD) {
+            showToastNotification('Contraseña incorrecta. Por favor, inténtelo de nuevo.');
+            return;
+        }
+
+        // Si pasa los controles de QA, redirigimos limpiamente
+        window.location.href = '/productos';
+    });
+</script>

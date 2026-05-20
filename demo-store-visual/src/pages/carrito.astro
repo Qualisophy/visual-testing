@@ -1,0 +1,137 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Tu Carrito">
+    <main class="max-w-container-max mx-auto px-lg py-xl flex-grow w-full">
+        <h1 class="font-display-lg text-display-lg mb-lg">Tu Carrito</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
+            <div class="lg:col-span-8 flex flex-col gap-md" id="cart-items-container">
+                <div class="flex justify-center py-xl">
+                    <span class="material-symbols-outlined animate-spin text-primary text-4xl">progress_activity</span>
+                </div>
+            </div>
+
+            <div class="lg:col-span-4 sticky top-[104px]">
+                <div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant shadow-sm flex flex-col gap-md">
+                    <h2 class="font-headline-md text-on-surface pb-md border-b border-outline-variant">Resumen del pedido</h2>
+                    <div class="pt-md flex justify-between items-center mb-md">
+                        <span class="font-headline-md text-on-surface">Total</span>
+                        <span id="cart-total" class="font-headline-lg text-primary">$0.00</span>
+                    </div>
+                    <form action="/resumen" method="GET">
+                        <button id="checkout-btn" class="w-full bg-primary text-on-primary py-md rounded-lg font-headline-md text-center hover:bg-primary/90 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" data-test="checkout" disabled>
+                            Proceder al Resumen
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>
+
+<script>
+    const container = document.getElementById('cart-items-container');
+    const totalDisplay = document.getElementById('cart-total');
+    const checkoutBtn = document.getElementById('checkout-btn') as HTMLButtonElement;
+
+    function renderCart() {
+        if (!container || !totalDisplay || !checkoutBtn) return;
+        
+        let cart = JSON.parse(localStorage.getItem('luxe_cart_items') || '[]');
+        container.innerHTML = '';
+
+        if (cart.length === 0) {
+            container.innerHTML = '<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant text-center"><p class="text-on-surface-variant font-body-lg">Tu carrito está vacío.</p><a href="/productos" class="text-primary hover:underline mt-sm inline-block">Ver productos</a></div>';
+            totalDisplay.textContent = '$0.00';
+            checkoutBtn.disabled = true;
+            return;
+        }
+
+        checkoutBtn.disabled = false;
+        let total = 0;
+
+        cart.forEach((item: any) => {
+            total += item.price * item.quantity;
+            
+            const html = `
+                <div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant item-card-shadow flex flex-col md:flex-row gap-md cart-item" data-id="${item.id}">
+                    <div class="w-full md:w-40 h-48 md:h-40 rounded-lg overflow-hidden bg-surface-container">
+                        <img alt="${item.name}" class="w-full h-full object-cover" src="${item.img}"/>
+                    </div>
+                    <div class="flex-grow flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-label-sm text-primary mb-xs uppercase tracking-wider">${item.category || 'PRODUCTO'}</p>
+                                <h3 class="font-headline-md text-on-surface">${item.name}</h3>
+                            </div>
+                            <p class="font-headline-md text-primary">$${item.price.toFixed(2)}</p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mt-md gap-4">
+                            <div class="flex items-center bg-surface-container-low rounded-lg border border-outline-variant p-1">
+                                <button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded transition-colors text-on-surface dec-btn cursor-pointer" data-test="dec-${item.id}">
+                                    <span class="material-symbols-outlined text-[18px]">remove</span>
+                                </button>
+                                <span class="px-md font-label-md text-label-md min-w-[40px] text-center quantity-val" data-test="qty-${item.id}">${item.quantity}</span>
+                                <button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded transition-colors text-on-surface inc-btn cursor-pointer" data-test="inc-${item.id}">
+                                    <span class="material-symbols-outlined text-[18px]">add</span>
+                                </button>
+                            </div>
+
+                            <button class="remove-btn flex items-center gap-xs text-error hover:underline font-label-md cursor-pointer" data-test="remove-${item.id}">
+                                <span class="material-symbols-outlined text-[20px]">delete</span> Eliminar todo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        });
+
+        totalDisplay.textContent = `$${total.toFixed(2)}`;
+        attachListeners();
+    }
+
+    function attachListeners() {
+        const cartItems = document.querySelectorAll('.cart-item');
+        
+        cartItems.forEach(item => {
+            const id = (item as HTMLElement).dataset.id;
+            const incBtn = item.querySelector('.inc-btn');
+            const decBtn = item.querySelector('.dec-btn');
+            const removeBtn = item.querySelector('.remove-btn');
+
+            incBtn?.addEventListener('click', () => updateQuantity(id, 1));
+            decBtn?.addEventListener('click', () => updateQuantity(id, -1));
+            removeBtn?.addEventListener('click', () => removeItem(id));
+        });
+    }
+
+    function updateQuantity(id: string | undefined, change: number) {
+        if (!id) return;
+        let cart = JSON.parse(localStorage.getItem('luxe_cart_items') || '[]');
+        const index = cart.findIndex((item: any) => item.id === id);
+        
+        if (index > -1) {
+            cart[index].quantity += change;
+            if (cart[index].quantity <= 0) {
+                cart.splice(index, 1); // Si baja a 0, lo borra
+            }
+            localStorage.setItem('luxe_cart_items', JSON.stringify(cart));
+            window.dispatchEvent(new Event('cart-updated'));
+            renderCart(); // Repinta el DOM
+        }
+    }
+
+    function removeItem(id: string | undefined) {
+        if (!id) return;
+        let cart = JSON.parse(localStorage.getItem('luxe_cart_items') || '[]');
+        cart = cart.filter((item: any) => item.id !== id);
+        localStorage.setItem('luxe_cart_items', JSON.stringify(cart));
+        window.dispatchEvent(new Event('cart-updated'));
+        renderCart();
+    }
+
+    // Renderizar al cargar
+    renderCart();
+</script>

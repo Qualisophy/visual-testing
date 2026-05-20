@@ -1,0 +1,119 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Toast from '../components/shared/ui/Toast';
+
+const products = [
+    { id: 'chronos', name: 'Chronos Minimalist', desc: 'Reloj de pulsera con caja de acero quirúrgico.', price: 185, category: 'RELOJERÍA', img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop' },
+    { id: 'vortex', name: 'Vortex Elite Runner', desc: 'Zapatillas de alto rendimiento con retorno de energía.', price: 128, category: 'CALZADO', img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800&auto=format&fit=crop' },
+    { id: 'lumina', name: 'Lumina Retro Cam', desc: 'Estética clásica con tecnología digital de última generación.', price: 315, category: 'FOTOGRAFÍA', img: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=800&auto=format&fit=crop' },
+    { id: 'hydropeak', name: 'HydroPeak Vessel', desc: 'Botella térmica de doble pared. Acero de grado alimenticio.', price: 45, category: 'ACCESORIOS', img: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=800&auto=format&fit=crop' },
+    { id: 'acoustic', name: 'Acoustic Pro-X', desc: 'Cancelación de ruido activa con transductores de alta fidelidad.', price: 349, category: 'AUDIO', img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=800&auto=format&fit=crop' },
+    { id: 'essence', name: 'Essence No. 7', desc: 'Fragancia artesanal con notas de sándalo y ámbar.', price: 125, category: 'BELLEZA', img: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop' }
+];
+---
+<Layout title="Productos Exclusivos">
+    <main class="flex-grow w-full max-w-container-max mx-auto px-lg py-xl relative">
+        <Toast client:load />
+
+        <div class="mb-lg flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+            <div>
+                <h1 class="font-display-lg text-display-lg text-on-surface mb-xs">Nuestra Colección</h1>
+                <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Descubre la ingeniería de precisión y el diseño minimalista.</p>
+            </div>
+            <select id="sort-select" class="bg-surface-container border-none text-on-surface-variant font-label-md rounded p-2 focus:outline-none cursor-pointer" data-test="product-sort-container">
+                <option value="az">Ordenar (A-Z)</option>
+                <option value="za">Ordenar (Z-A)</option>
+                <option value="lohi">Precio (Menor a Mayor)</option>
+                <option value="hilo">Precio (Mayor a Menor)</option>
+            </select>
+        </div>
+
+        <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+            {products.map((product) => (
+                <div class="product-card bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant flex flex-col" data-id={product.id} data-name={product.name} data-price={product.price} data-category={product.category} data-img={product.img}>
+                    <div class="relative aspect-square bg-surface-variant">
+                        <img alt={product.name} class="w-full h-full object-cover" src={product.img}/>
+                    </div>
+                    <div class="p-md flex flex-col flex-grow">
+                        <h3 class="font-headline-md text-headline-md text-on-surface mb-xs">{product.name}</h3>
+                        <p class="font-body-md text-body-md text-on-surface-variant mb-md flex-grow">{product.desc}</p>
+                        <div class="flex items-center justify-between mt-auto">
+                            <span class="font-headline-md text-headline-md text-primary">${product.price}</span>
+                            <button 
+                                class="add-to-cart-btn bg-primary hover:bg-[#1e4a73] active:scale-95 text-on-primary px-md py-xs rounded-lg font-label-md text-label-md transition-all flex items-center gap-xs cursor-pointer" 
+                                data-test={`add-to-cart-${product.id}`}
+                            >
+                                <span class="material-symbols-outlined text-[18px] pointer-events-none">add_shopping_cart</span> Añadir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    </main>
+</Layout>
+
+<script>
+    // 1. Lógica del Carrito (Guardar Objetos en localStorage)
+    const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const card = (e.target as HTMLElement).closest('.product-card') as HTMLElement;
+            if (!card) return;
+
+            const product = {
+                id: card.dataset.id,
+                name: card.dataset.name,
+                price: parseFloat(card.dataset.price || '0'),
+                category: card.dataset.category,
+                img: card.dataset.img,
+                quantity: 1
+            };
+
+            let cart = JSON.parse(localStorage.getItem('luxe_cart_items') || '[]');
+            
+            // Si el producto ya existe, le sumamos 1 a la cantidad
+            const existingProductIndex = cart.findIndex((item: any) => item.id === product.id);
+            if (existingProductIndex > -1) {
+                cart[existingProductIndex].quantity += 1;
+            } else {
+                cart.push(product);
+            }
+
+            localStorage.setItem('luxe_cart_items', JSON.stringify(cart));
+            window.dispatchEvent(new Event('cart-updated'));
+            window.dispatchEvent(new CustomEvent('show-toast', { 
+                detail: { message: 'Producto añadido al carrito correctamente.', type: 'success' } 
+            }));
+        });
+    });
+
+    // 2. Lógica de Ordenamiento
+    const sortSelect = document.getElementById('sort-select') as HTMLSelectElement;
+    const grid = document.getElementById('product-grid');
+
+    if (sortSelect && grid) {
+        sortSelect.addEventListener('change', (e) => {
+            const val = (e.target as HTMLSelectElement).value;
+            const cards = Array.from(grid.querySelectorAll('.product-card')) as HTMLElement[];
+
+            cards.sort((a, b) => {
+                const nameA = a.dataset.name || '';
+                const nameB = b.dataset.name || '';
+                const priceA = parseFloat(a.dataset.price || '0');
+                const priceB = parseFloat(b.dataset.price || '0');
+
+                if (val === 'az') return nameA.localeCompare(nameB);
+                if (val === 'za') return nameB.localeCompare(nameA);
+                if (val === 'lohi') return priceA - priceB;
+                if (val === 'hilo') return priceB - priceA; // Nuevo filtro
+                return 0;
+            });
+
+            grid.innerHTML = '';
+            cards.forEach(card => grid.appendChild(card));
+        });
+        
+        sortSelect.dispatchEvent(new Event('change'));
+    }
+</script>

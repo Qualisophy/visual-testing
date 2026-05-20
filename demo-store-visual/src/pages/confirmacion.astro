@@ -1,0 +1,27 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Confirmación">
+    <main class="flex-grow flex flex-col items-center py-xl px-margin-mobile md:px-lg w-full">
+        <div class="max-w-[1000px] w-full flex flex-col items-center">
+            <div class="text-center mb-lg success-checkmark-animation">
+                <div class="w-20 h-20 bg-primary-container rounded-full flex items-center justify-center mx-auto mb-md shadow-lg">
+                    <span class="material-symbols-outlined text-on-primary text-[48px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                </div>
+                <h1 class="font-display-lg text-primary mb-xs complete-header" data-test="complete-header">¡Gracias por tu compra!</h1>
+                <p class="font-body-lg text-on-surface-variant">Tu pedido ha sido procesado con éxito y está en camino.</p>
+            </div>
+            
+            <a href="/productos" data-test="back-to-products" class="mt-lg h-14 px-8 bg-primary text-on-primary font-label-md text-label-md font-bold rounded-lg shadow-md hover:bg-[#245787] flex items-center justify-center gap-base">
+                <span class="material-symbols-outlined">shopping_bag</span> Volver a la tienda
+            </a>
+        </div>
+    </main>
+</Layout>
+
+<script>
+    // La compra se ha completado: reseteamos el carrito.
+    localStorage.removeItem('luxe_cart_count');
+    // Disparamos el evento para que el Header (si está visible) actualice el globo a 0 al instante
+    window.dispatchEvent(new Event('cart-updated'));
+</script>
