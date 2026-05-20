@@ -39,7 +39,7 @@ test.describe("Flujo Visual de Login", () => {
     await loginPage.login("usuario_prueba_1", "secret_luxe");
     await eyes.check("Pantalla de Productos", Target.window().fully());
 
-    await eyes.close();
+    await eyes.close(false);
   });
 
   test.afterEach(async () => {
