@@ -1,23 +1,19 @@
 import { defineConfig, devices } from "@playwright/test";
 import * as dotenv from "dotenv";
 
-// Cargar variables de entorno desde .env
 dotenv.config();
 
 export default defineConfig({
-  testDir: "./tests",
+  testDir: "./src/tests",
   timeout: 30000,
-  expect: { timeout: 5000 },
-  fullyParallel: true,
-  retries: 0,
-  workers: process.env.CI ? 1 : undefined,
+  fullyParallel: false,
   reporter: "html",
   use: {
-    actionTimeout: 0,
+    // Aquí conectamos Playwright con tu web alojada en Vercel
+    baseURL: "https://visual-testing.vercel.app",
     trace: "on-first-retry",
-    // Ejecución con navegador visible para desarrollo (headless: false)
-    headless: false,
-    screenshot: "only-on-failure",
+    // Si quieres ver cómo el navegador se abre y hace los clics, déjalo en false
+    headless: process.env.CI ? true : false,
   },
   projects: [
     {
